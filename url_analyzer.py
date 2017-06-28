@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 try:
     import xml.etree.cElementTree as ElementTree
 except ImportError:
@@ -51,7 +53,7 @@ def get_urls(subfield_list):
             value = subfield.text
             if is_url(value):
                 # Add this URL to our list
-                urls.append(value)
+                urls.append(URL(value))
 
     # Return the list of found URLs
     return urls
@@ -79,8 +81,28 @@ class Record:
     def __str__(self):
         result = 'Record {} URLs:'.format(self.id)
         for url in self.urls:
-            result += '\n' + url
+            result += '\n\tDomain: ' + url.domain + ((' on port ' + str(url.port)) if url.port else '')
         return result
+
+
+class URL:
+
+    def __init__(self, url_string):
+        self.full_url = url_string
+        parse_result = urlparse(url_string)
+        self.protocol = parse_result.scheme  # e.g. http, ftp
+        self.port = parse_result.port  # e.g. 80 for http, 21 for ftp (may be None)
+
+        # netloc gives you the domain name with the port appended, which we'd like to separate
+        self.domain = parse_result.netloc  # e.g. www.google.com:80
+        # Strip the port number, if present
+        if ':' in self.domain:
+            colon_index = self.domain.find(':')  # Index of the colon in the string, e.g. 14
+            self.domain = self.domain[:colon_index]  # e.g. www.google.com
+
+        self.path = parse_result.path  # e.g. /resources/56.html
+
+
 
 
 # If this program is being run on its own (rather than imported
