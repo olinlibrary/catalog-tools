@@ -51,7 +51,7 @@ def get_urls(subfield_list):
         else:
             # Since there are no children, this element might contain the URL
             value = subfield.text
-            if is_url(value):
+            if URL.is_url(value):
                 # Add this URL to our list
                 urls.append(URL(value))
 
@@ -59,12 +59,15 @@ def get_urls(subfield_list):
     return urls
 
 
-def is_url(string):
-    """ Determines whether or not a string is a URL
-        :param string: a string to analyze
-        :return True if the string is a URL, False otherwise
-    """
-    return '.com' in string
+def group_records_by_domain(records):
+    groups = {}
+    for record in records:
+        for url in record.urls:
+            if url.domain in groups:
+                groups[url.domain].add_record(record)
+            else:
+                groups[url.domain] = RecordGroup(url.domain, [record])
+    return groups
 
 
 def print_records(records):
@@ -85,6 +88,21 @@ class Record:
         return result
 
 
+class RecordGroup:
+
+    def __init__(self, name, records = None):
+        self.name = name
+        self.records = records if records else []
+
+    def add_record(self, record):
+        self.records.append(record)
+
+    def __str__(self):
+        record_numbers_list = ','.join([record.id for record in self.records])
+        result = 'Record group {}:\n\tRecords: {}'.format(self.name, record_numbers_list)
+        return result
+
+
 class URL:
 
     def __init__(self, url_string):
@@ -102,12 +120,22 @@ class URL:
 
         self.path = parse_result.path  # e.g. /resources/56.html
 
-
+    @staticmethod
+    def is_url(string):
+        """ Determines whether or not a string is a URL
+            :param string: a string to analyze
+            :return True if the string is a URL, False otherwise
+        """
+        return '.com' in string
 
 
 # If this program is being run on its own (rather than imported
 # from another module), run the following
 if __name__ == '__main__':
     file_path = '/media/sf_ubuntu-vm-shared/URLs-100.xml'
-    res = parse_xml(file_path)
-    print_records(res)
+    records = parse_xml(file_path)
+    # print_records(records)
+    groups = group_records_by_domain(records)
+
+    for name, group in groups.items():
+        print(group)
