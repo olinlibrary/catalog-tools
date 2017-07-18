@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+import argparse
 
 try:
     import xml.etree.cElementTree as ElementTree
@@ -170,18 +171,26 @@ class URL:
 # If this program is being run on its own (rather than imported
 # from another module), run the following
 if __name__ == '__main__':
-    file_path = '/media/sf_ubuntu-vm-shared/URLs.xml'
+
+    parser = argparse.ArgumentParser(description='Group records by associated URLs.')
+    parser.add_argument('file', metavar='file', type=str, nargs='+',
+                        help='an XML file of catalog records')
+
+    args = parser.parse_args()
+
+    file_path = args.file[0]
+    print('Processing {}...'.format(file_path))
     records = URLAnalyzer.parse_xml(file_path)
     # print_records(records)
     groups, counts = URLAnalyzer.group_records_by_domain(records)
 
-    output_file = open(file_path + '-processed.txt')
+    output_file = open(file_path + '-processed.txt', 'w+')
 
     for name, group in groups.items():
         print(group)
-        output_file.write(group)
+        output_file.write(str(group))
 
     print('Found the following number of records with specific numbers of URLs:')
-    print(counts)
-    output_file.write(counts)
+    print(str(counts))
+    output_file.write(str(counts))
     output_file.close()
